@@ -57,3 +57,46 @@ exports.budgetProgress = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getAll = async (req, res, next) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const transactions = await Transaction.findAll(
+      req.user.id,
+      limit,
+      offset
+    );
+
+    res.json(transactions);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+exports.update = async (req, res, next) => {
+  try {
+    const transaction = await Transaction.update(
+      req.params.id,
+      req.user.id,
+      req.body
+    );
+
+    res.json(transaction);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+exports.delete = async (req, res, next) => {
+  try {
+    await Transaction.delete(req.params.id, req.user.id);
+    res.json({ message: "Transaction deleted" });
+  } catch (err) {
+    next(err);
+  }
+};

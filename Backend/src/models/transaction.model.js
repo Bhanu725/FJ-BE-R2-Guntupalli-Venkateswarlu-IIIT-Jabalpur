@@ -76,3 +76,56 @@ exports.getBudgetProgress = async (userId) => {
   const { rows } = await pool.query(query, [userId]);
   return rows;
 };
+
+exports.categoryBreakdown = async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT c.name, c.type, SUM(t.amount) AS total
+       FROM transactions t
+       JOIN categories c ON t.category_id=c.id
+       WHERE t.user_id=$1
+       GROUP BY c.name, c.type`,
+      [req.user.id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.findAll = async (userId, limit, offset) => {
+  const { rows } = await pool.query(
+    `SELECT * FROM transactions
+     WHERE user_id = $1
+     ORDER BY transaction_date DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset]
+  );
+
+  return rows;
+};
+
+exports.update = async (id, userId, data) => {
+  const { amount, description } = data;
+
+  const { rows } = await pool.query(
+    `UPDATE transactions
+     SET amount = $1,
+         description = $2
+     WHERE id = $3 AND user_id = $4
+     RETURNING *`,
+    [amount, description, id, userId]
+  );
+
+  return rows[0];
+};
+
+
+exports.delete = async (id, userId) => {
+  await pool.query(
+    `DELETE FROM transactions
+     WHERE id = $1 AND user_id = $2`,
+    [id, userId]
+  );
+};

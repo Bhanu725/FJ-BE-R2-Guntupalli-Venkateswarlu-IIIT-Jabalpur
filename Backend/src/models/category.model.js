@@ -37,3 +37,29 @@ exports.findById = async (id, userId) => {
 
   return rows[0];
 };
+
+exports.update = async (id, userId, data) => {
+  const { name, budgetLimit } = data;
+
+  const { rows } = await pool.query(
+    `UPDATE categories
+     SET name = $1,
+         budget_limit = $2
+     WHERE id = $3 AND user_id = $4
+     RETURNING *`,
+    [name, budgetLimit, id, userId]
+  );
+
+  
+  return rows[0];
+};
+
+
+exports.softDelete = async (id, userId) => {
+  await pool.query(
+    `UPDATE categories
+     SET is_deleted = TRUE
+     WHERE id = $1 AND user_id = $2`,
+    [id, userId]
+  );
+};
