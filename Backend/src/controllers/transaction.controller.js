@@ -1,6 +1,7 @@
 const Transaction = require('../models/transaction.model');
 const { validateCreateTransaction } = require('../validators/transaction.validator');
 const { checkBudgetOverrun } = require('../services/budget.service');
+const { convertFromUSD } = require("../services/currency.service");
 
 exports.createTransaction = async (req, res, next) => {
   try {
@@ -58,9 +59,13 @@ exports.budgetProgress = async (req, res, next) => {
   }
 };
 
+
+
 exports.getAll = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
+    const currency = req.query.currency || "USD";
+
     const limit = 10;
     const offset = (page - 1) * limit;
 
@@ -70,8 +75,29 @@ exports.getAll = async (req, res, next) => {
       offset
     );
 
+    if (currency !== "USD") {
+      for (let t of transactions) {
+        t.amount = await convertFromUSD(
+          t.amount,
+          currency
+        );
+      }
+    }
+
     res.json(transactions);
+
   } catch (err) {
+    next(err);
+  }
+};
+
+
+exports.categoryBreakdown = async (req, res, next) => {
+  try {
+    const breakdown = await Transaction.categoryBreakdown(req.user.id);
+    res.json(breakdown);
+  } catch (err) {
+    console.log(err);
     next(err);
   }
 };

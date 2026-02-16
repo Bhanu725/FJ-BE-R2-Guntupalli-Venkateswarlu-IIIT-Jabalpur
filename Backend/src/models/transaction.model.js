@@ -77,7 +77,7 @@ exports.getBudgetProgress = async (userId) => {
   return rows;
 };
 
-exports.categoryBreakdown = async (req, res, next) => {
+exports.categoryBreakdown = async (userId) => {
   try {
     const { rows } = await pool.query(
       `SELECT c.name, c.type, SUM(t.amount) AS total
@@ -85,26 +85,31 @@ exports.categoryBreakdown = async (req, res, next) => {
        JOIN categories c ON t.category_id=c.id
        WHERE t.user_id=$1
        GROUP BY c.name, c.type`,
-      [req.user.id]
+      [userId]
     );
 
-    res.json(rows);
+    // res.json(rows);
+    return rows;
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };
 
 exports.findAll = async (userId, limit, offset) => {
   const { rows } = await pool.query(
-    `SELECT * FROM transactions
-     WHERE user_id = $1
-     ORDER BY transaction_date DESC
+    `SELECT t.*, c.name AS category_name
+     FROM transactions t
+     JOIN categories c ON t.category_id = c.id
+     WHERE t.user_id = $1
+     ORDER BY t.transaction_date DESC
      LIMIT $2 OFFSET $3`,
     [userId, limit, offset]
   );
 
   return rows;
 };
+
 
 exports.update = async (id, userId, data) => {
   const { amount, description } = data;
