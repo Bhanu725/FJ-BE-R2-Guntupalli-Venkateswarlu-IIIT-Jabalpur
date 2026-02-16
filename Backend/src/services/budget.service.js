@@ -1,18 +1,45 @@
-const Transaction = require('../models/transaction.model');
-const { sendEmail } = require('../config/mail');
+const pool = require("../config/db");
+const { sendEmail } = require("../config/mail");
 
-exports.checkBudgetOverrun = async (user, categoryId) => {
-  const progress = await Transaction.getBudgetProgress(user.id);
+exports.checkBudgetOverrun = async (userId, categoryId, userEmail) => {
 
-  const category = progress.find(c => c.id === categoryId);
+  // Get budget limit for this category
+  const { rows: categoryRows } = await pool.query(
+    `SELECT name, budget_limit
+     FROM categories
+     WHERE id = $1 AND user_id = $2`,
+    [categoryId, userId]
+  );
 
-  if (!category || !category.budget_limit) return;
+  if (!categoryRows.length) return;
 
-  if (Number(category.spent) > Number(category.budget_limit)) {
+  const { name, budget_limit } = categoryRows[0];
+
+  if (!budget_limit) return; // no budget set
+
+  // Calculate total expense for this category
+  const { rows: expenseRows } = await pool.query(
+    `SELECT COALESCE(SUM(amount),0) AS total_expense
+     FROM transactions
+     WHERE user_id = $1
+       AND category_id = $2
+       AND type = 'expense'`,
+    [userId, categoryId]
+  );
+
+  const totalExpense = Number(expenseRows[0].total_expense);
+
+  if (totalExpense > Number(budget_limit)) {
+
+    console.log("Budget exceeded for:", name);
+
     await sendEmail(
-      user.email,
+      userEmail,
       "Budget Exceeded",
-      `You exceeded your budget for ${category.name}`
+      `You exceeded your budget for "${name}"
+
+Budget Limit: ${budget_limit}
+Spent: ${totalExpense}`
     );
   }
 };

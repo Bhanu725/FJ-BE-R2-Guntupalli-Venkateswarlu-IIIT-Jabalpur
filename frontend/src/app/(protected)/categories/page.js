@@ -7,7 +7,7 @@ import CategoryList from "@/components/categories/CategoryList";
 export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
-  const [type, setType] = useState("expense");
+  // const [type, setType] = useState("expense");
   const [budgetLimit, setBudgetLimit] = useState("");
 
   const fetchCategories = async () => {
@@ -24,7 +24,6 @@ export default function Categories() {
 
     await apiRequest("/categories", "POST", {
       name,
-      type,
       budgetLimit
     });
 
@@ -51,14 +50,7 @@ export default function Categories() {
           onChange={(e) => setName(e.target.value)}
         />
 
-        <select
-          className="border p-2"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
-        </select>
+       
 
         <input
           type="number"

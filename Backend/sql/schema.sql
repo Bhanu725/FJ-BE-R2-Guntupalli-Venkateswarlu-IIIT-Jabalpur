@@ -1,5 +1,5 @@
 -- ============================================
--- PERSONAL FINANCE TRACKER - COMPLETE SCHEMA
+-- PERSONAL FINANCE TRACKER - FINAL SCHEMA
 -- ============================================
 
 -- ============================================
@@ -29,24 +29,24 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 
 -- ============================================
--- CATEGORY TYPE ENUM
+-- TRANSACTION TYPE ENUM (MOVED FROM CATEGORY)
 -- ============================================
-DO $$ BEGIN
-    CREATE TYPE category_type AS ENUM ('income', 'expense');
+DO $$
+BEGIN
+    CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 EXCEPTION
-    WHEN duplicate_object THEN null;
+    WHEN duplicate_object THEN NULL;
 END $$;
 
 
 -- ============================================
--- CATEGORIES TABLE
+-- CATEGORIES TABLE (NO TYPE HERE ANYMORE)
 -- ============================================
 CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     user_id UUID NOT NULL,
     name VARCHAR(100) NOT NULL,
-    type category_type NOT NULL,
 
     budget_limit NUMERIC(14,2) CHECK (budget_limit >= 0),
 
@@ -64,13 +64,15 @@ CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id);
 
 
 -- ============================================
--- TRANSACTIONS TABLE
+-- TRANSACTIONS TABLE (TYPE BELONGS HERE NOW)
 -- ============================================
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     user_id UUID NOT NULL,
     category_id UUID NOT NULL,
+
+    type transaction_type NOT NULL,
 
     amount NUMERIC(14,2) NOT NULL CHECK (amount <> 0),
 
@@ -97,6 +99,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
 
 
 -- ============================================

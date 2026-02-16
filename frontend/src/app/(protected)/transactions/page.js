@@ -16,6 +16,8 @@ export default function Transactions() {
   const [transactionDate, setTransactionDate] = useState("");
   const [description, setDescription] = useState("");
   const [receiptUrl, setReceiptUrl] = useState("");
+  const [type, setType] = useState("expense");
+
 
   // Currency for creating transaction
   const [currency, setCurrency] = useState("USD");
@@ -65,6 +67,7 @@ export default function Transactions() {
 
     await apiRequest("/transactions", "POST", {
       categoryId,
+      type,
       amount,
       currency,
       transactionDate,
@@ -75,6 +78,7 @@ export default function Transactions() {
     setAmount("");
     setDescription("");
     setReceiptUrl("");
+    // setType("expense");
 
     fetchTransactions();
   };
@@ -110,6 +114,16 @@ export default function Transactions() {
               </option>
             ))}
           </select>
+
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="border p-2"
+          >
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+
 
           <input
             type="number"
